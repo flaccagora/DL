@@ -1,7 +1,7 @@
 # Deep_Learning
 
 # Train Dataset
-In Leonardo_scratch/mnunzian trovate la cartella data.
+In leonardo_scratch/large/userexternal/mnunzian trovate la cartella data.
 per Noemi work in progress, per il momento basti sapere che lavoreremo con file di testo
 
 # TODO
