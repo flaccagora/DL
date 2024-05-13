@@ -5,7 +5,7 @@ In leonardo_scratch/large/userexternal/mnunzian trovate la cartella data.
 per Noemi work in progress, per il momento basti sapere che lavoreremo con file di testo
 
 UPDATE: ho creato un file di testo con 1000 righe di testo, per fare delle prove. lo trovate in `data/test.txt`. Ho anche creato uno script
-in `gpt2/tests` da cui poter prendere spunto.
+in `gpt2/src/tests/test.py` da cui poter prendere spunto.
 
 # TODO
 (consiglio lettura dello script di train per capire problematiche e come muovesi.. )
