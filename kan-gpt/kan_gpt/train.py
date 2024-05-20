@@ -213,7 +213,7 @@ def main(rank, args):
         # TODO: Add W&B Hooks
         if trainer.iter_num % args.eval == 0:
 
-            save_model(model=model, run=run)
+            save_model(model=trainer.model, run=run)
 
 
             print(
@@ -226,14 +226,14 @@ def main(rank, args):
             print("EVAL")
             print("=" * 20)
 
-            model.eval()
+            trainer.model.eval()
             with torch.no_grad():
                 train_score = eval_split(
                     trainer,
                     "train",
                     max_batches=5,
                     batch_size=int(args.batch_size),
-                    model=model,
+                    model=trainer.model,
                     train_dataset=train_dataset,
                     test_dataset=test_dataset,
                 )
@@ -242,7 +242,7 @@ def main(rank, args):
                     "test",
                     max_batches=5,
                     batch_size=int(args.batch_size),
-                    model=model,
+                    model=trainer.model,
                     train_dataset=train_dataset,
                     test_dataset=test_dataset,
                 )
@@ -264,7 +264,7 @@ def main(rank, args):
                     test_cross_entropy,
                 ) = test_score
 
-            model.train()
+            trainer.model.train()
             print("train_loss: ", train_loss)
             print("train_perplexity: ", train_perplexity)
             print("train_f1: ", train_f1)
