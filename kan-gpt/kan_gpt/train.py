@@ -204,6 +204,7 @@ def main(rank, args):
     train_config.save = args.save
     trainer = Trainer(train_config, model, train_dataset, rank)
 
+    run = None
     if run is None:
         run = wandb.init(project="KAN-GPT", config=config)
     wandb.watch(model)
