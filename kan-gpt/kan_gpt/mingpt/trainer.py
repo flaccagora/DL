@@ -10,7 +10,12 @@ import torch
 from torch.utils.data.dataloader import DataLoader
 
 import tqdm as tqdm
+from tqdm import trange
 from kan_gpt.mingpt.utils import CfgNode as CN
+
+import torch.multiprocessing as mp
+from torch.utils.data.distributed import DistributedSampler
+from torch.nn.parallel import DistributedDataParallel as DDP
 
 
 class Trainer:
@@ -31,12 +36,14 @@ class Trainer:
         C.grad_norm_clip = 1.0
         return C
 
-    def __init__(self, config, model, train_dataset):
+    def __init__(self, config, model, train_dataset, gpu_id=0):
         self.config = config
-        self.model = model
+        self.gpu_id = gpu_id
+        self.model = model.to(gpu_id)
         self.optimizer = None
         self.train_dataset = train_dataset
         self.callbacks = defaultdict(list)
+        self.model = DDP(model, device_ids=[gpu_id])
 
         # determine the device we'll train on
         if config.device == "auto":
@@ -60,6 +67,23 @@ class Trainer:
     def trigger_callbacks(self, onevent: str):
         for callback in self.callbacks.get(onevent, []):
             callback(self)
+   
+    def prepare_dataloader(self):
+        return  DataLoader(
+            self.train_dataset,
+            sampler=DistributedSampler(self.train_dataset),
+            shuffle=False,
+            pin_memory=True,
+            batch_size=self.config.batch_size,
+            num_workers=self.config.num_workers,
+        )
+
+    def _save_checkpoint(self, epoch):
+        ckp = self.model.module.state_dict()
+        PATH = "checkpoint.pt"
+        torch.save(ckp, PATH)
+        print(f"Epoch {epoch} | Training checkpoint saved at {PATH}")
+
 
     def run(self):
         model, config = self.model, self.config
@@ -68,64 +92,44 @@ class Trainer:
         self.optimizer = model.configure_optimizers(config)
 
         # setup the dataloader
-        train_loader = DataLoader(
-            self.train_dataset,
-            sampler=torch.utils.data.RandomSampler(
-                self.train_dataset, replacement=True, num_samples=int(1e10)
-            ),
-            shuffle=False,
-            pin_memory=True,
-            batch_size=config.batch_size,
-            num_workers=config.num_workers,
-        )
+        train_loader = self.prepare_dataloader()
 
         model.train()
         self.iter_num = 0
         self.iter_time = time.time()
         data_iter = iter(train_loader)
+        
+        for self.iter_num in trange(config.max_iters):
 
+            b_sz = len(next(iter(train_loader))[0])
+            print(f"[GPU{self.gpu_id}] Epoch {self.iter_num} | Batchsize: {b_sz} | Steps: {len(train_loader)}")
+            
+            train_loader.sampler.set_epoch(self.iter_num)
+            
+            for x, y in train_loader:
+                
+                x = x.to(self.gpu_id)
+                y = y.to(self.gpu_id)
+                
+                # forward the model
+                logits, self.loss = model(x, y)
 
+                # backprop and update the parameters
+                model.zero_grad(set_to_none=True)
+                self.loss.backward()
+                torch.nn.utils.clip_grad_norm_(
+                    model.parameters(), config.grad_norm_clip
+                )
+                self.optimizer.step()
 
-        training_iters = tqdm.tqdm(
-            range(0, config.max_iters),
-            total=config.max_iters,
-            dynamic_ncols=True)
-        training_iters.update(1)
+                if self.gpu_id == 0:
+                    self.trigger_callbacks("on_batch_end")
+                
+                self.iter_num += 1
+                tnow = time.time()
+                self.iter_dt = tnow - self.iter_time
+                self.iter_time = tnow
 
-
-        while True:
-
-            # fetch the next batch (x, y) and re-init iterator if needed
-            try:
-                batch = next(data_iter)
-            except StopIteration:
-                data_iter = iter(train_loader)
-                batch = next(data_iter)
-            batch = [t.to(self.device) for t in batch]
-            x, y = batch
-
-            # forward the model
-            logits, self.loss = model(x, y)
-
-            # backprop and update the parameters
-            model.zero_grad(set_to_none=True)
-            self.loss.backward()
-            torch.nn.utils.clip_grad_norm_(
-                model.parameters(), config.grad_norm_clip
-            )
-            self.optimizer.step()
-
-            self.trigger_callbacks("on_batch_end")
-            self.iter_num += 1
-            tnow = time.time()
-            self.iter_dt = tnow - self.iter_time
-            self.iter_time = tnow
-
-            # termination conditions
-            if (
-                config.max_iters is not None
-                and self.iter_num >= config.max_iters
-            ):
-                break
-
-            training_iters.update(1)
+                # training_iters.update(1)
+            if self.gpu_id == 0 and self.iter_num % config.save == 0:
+                self._save_checkpoint(self.iter_num)

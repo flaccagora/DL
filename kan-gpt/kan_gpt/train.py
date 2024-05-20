@@ -16,6 +16,22 @@ from kan_gpt.mingpt.trainer import Trainer
 from kan_gpt.model import GPT as KAN_GPT
 from kan_gpt.settings import settings
 
+from torch.distributed import init_process_group, destroy_process_group
+import os
+import torch.multiprocessing as mp
+
+
+def ddp_setup(rank, world_size):
+    """
+    Args:
+        rank: Unique identifier of each process
+        world_size: Total number of processes
+    """
+    os.environ["MASTER_ADDR"] = "localhost"
+    os.environ["MASTER_PORT"] = "12355"
+    init_process_group(backend="nccl", rank=rank, world_size=world_size)
+    torch.cuda.set_device(rank)
+
 
 def metrics(y, y_pred):
     """
@@ -129,7 +145,10 @@ def save_model(
     return save_path
 
 
-def main(args, run=None):
+def main(rank, world_size, args, run=None):
+    
+    ddp_setup(rank, world_size)
+
     config = {
         "model_type": args.model_type,
         "batch_size": args.batch_size,
@@ -181,6 +200,7 @@ def main(args, run=None):
     train_config.num_workers = int(args.num_workers)
     train_config.batch_size = int(args.batch_size)
     train_config.device = args.device
+    train_config.save = args.save
     trainer = Trainer(train_config, model, train_dataset)
 
     if run is None:
@@ -189,7 +209,7 @@ def main(args, run=None):
 
     def batch_end_callback(trainer):
         # TODO: Add W&B Hooks
-        if trainer.iter_num % args.save_and_eval == 0:
+        if trainer.iter_num % args.eval == 0:
 
             save_model(model=model, run=run)
 
@@ -280,8 +300,13 @@ def main(args, run=None):
 
     trainer.run()
 
-    save_model(model=model, run=run)
+    if rank==0:
+        save_model(model=model, run=run)
+
     wandb.finish()
+
+    destroy_process_group()
+
 
 
 if __name__ == "__main__":
@@ -294,7 +319,8 @@ if __name__ == "__main__":
     parser.add_argument("--max_iters", default=2000)
     parser.add_argument("--num_workers", default=0)
     parser.add_argument("--batch_size", default=64)
-    parser.add_argument("--save_and_eval", default=1000)
+    parser.add_argument("--eval", default=1000)
+    parser.add_argument("--save", default=1000)
 
     parser.add_argument(
         "--dataset",
@@ -315,4 +341,5 @@ if __name__ == "__main__":
     args.num_workers = int(args.num_workers)
     args.batch_size = int(args.batch_size)
 
-    main(args)
+    world_size = torch.cuda.device_count()
+    mp.spawn(main, world_size, args, nprocs=world_size)
