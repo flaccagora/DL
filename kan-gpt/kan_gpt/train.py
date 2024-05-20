@@ -96,12 +96,16 @@ def eval_split(
         dataset, batch_size=batch_size, num_workers=0, drop_last=False
     )
     for b, (x, y) in enumerate(loader):
+        print("b: ", b)
         x = x.to(trainer.gpu_id)
         y = y.to(trainer.gpu_id)
+
+        print("x, y to device")
 
         block_size = y.shape[1]
 
         logits, loss = model(x, y)
+        print("model output")
 
         probs = F.softmax(logits, dim=-1)
 
