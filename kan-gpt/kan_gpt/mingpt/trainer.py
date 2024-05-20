@@ -101,7 +101,7 @@ class Trainer:
             
             train_loader.sampler.set_epoch(self.iter_num)
             
-            for x, y in train_loader:
+            for _,(x, y) in enumerate(train_loader):
                 
                 x = x.to(self.gpu_id)
                 y = y.to(self.gpu_id)
