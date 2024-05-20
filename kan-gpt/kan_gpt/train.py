@@ -96,26 +96,26 @@ def eval_split(
         dataset, batch_size=batch_size, num_workers=0, drop_last=False
     )
     for b, (x, y) in enumerate(loader):
-        print("b: ", b)
         x = x.to(trainer.gpu_id)
         y = y.to(trainer.gpu_id)
 
-        print("x, y to device")
-
-        block_size = y.shape[1]
+        #block_size = y.shape[1]
 
         logits, loss = model(x, y)
-        print("model output")
 
-        probs = F.softmax(logits, dim=-1)
+        #probs = F.softmax(logits, dim=-1)
 
-        _, y_pred = torch.topk(probs, k=block_size, dim=-1)
+       # _, y_pred = torch.topk(probs, k=block_size, dim=-1)
 
-        print("topk")
-        perplexity, f1, precision, recall, cross_entropy = metrics(
-            y=y.cpu().numpy(), y_pred=probs.cpu().numpy()
-        )
-        print("metrix")
+        #perplexity, f1, precision, recall, cross_entropy = metrics(
+        #    y=y.cpu().numpy(), y_pred=probs.cpu().numpy()
+        #)
+
+        perplexity = 0
+        f1 = 0
+        precision = 0
+        recall = 0
+        cross_entropy = 0
 
         results.append(
             (loss, perplexity, f1, precision, recall, cross_entropy)
@@ -217,7 +217,7 @@ def main(rank, args):
 
     def batch_end_callback(trainer):
         # TODO: Add W&B Hooks
-        if trainer.iter_num % args.eval == 0:
+        if trainer.iter_num % args.eval == 0 and trainer.iter_num !=0:
 
             save_model(model=trainer.model, run=run)
 
@@ -327,7 +327,7 @@ if __name__ == "__main__":
     parser.add_argument("--max_iters", default=2000)
     parser.add_argument("--num_workers", default=0)
     parser.add_argument("--batch_size", default=64)
-    parser.add_argument("--eval", default=1000)
+    parser.add_argument("--eval", default=50)
     parser.add_argument("--save", default=1000)
 
     parser.add_argument(
