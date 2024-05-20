@@ -1,5 +1,0 @@
-regex
-tqdm
-torch
-numpy
-matplotlib
