@@ -9,6 +9,7 @@ from collections import defaultdict
 import torch
 from torch.utils.data.dataloader import DataLoader
 
+import tqdm as tqdm
 from kan_gpt.mingpt.utils import CfgNode as CN
 
 
@@ -82,6 +83,16 @@ class Trainer:
         self.iter_num = 0
         self.iter_time = time.time()
         data_iter = iter(train_loader)
+
+
+
+        training_iters = tqdm.tqdm(
+            range(0, config.max_iters),
+            total=config.max_iters,
+            dynamic_ncols=True)
+        training_iters.update(1)
+
+
         while True:
 
             # fetch the next batch (x, y) and re-init iterator if needed
@@ -116,3 +127,5 @@ class Trainer:
                 and self.iter_num >= config.max_iters
             ):
                 break
+
+            training_iters.update(1)

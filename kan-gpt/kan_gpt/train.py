@@ -189,7 +189,11 @@ def main(args, run=None):
 
     def batch_end_callback(trainer):
         # TODO: Add W&B Hooks
-        if trainer.iter_num % 100 == 0:
+        if trainer.iter_num % args.save_and_eval == 0:
+
+            save_model(model=model, run=run)
+
+
             print(
                 f"iter_dt {trainer.iter_dt * 1000:.2f}ms; "
                 f"iter {trainer.iter_num}: "
@@ -290,6 +294,7 @@ if __name__ == "__main__":
     parser.add_argument("--max_iters", default=2000)
     parser.add_argument("--num_workers", default=0)
     parser.add_argument("--batch_size", default=64)
+    parser.add_argument("--save_and_eval", default=1000)
 
     parser.add_argument(
         "--dataset",
