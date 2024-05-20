@@ -111,9 +111,11 @@ def eval_split(
 
         _, y_pred = torch.topk(probs, k=block_size, dim=-1)
 
+        print("topk")
         perplexity, f1, precision, recall, cross_entropy = metrics(
             y=y.cpu().numpy(), y_pred=probs.cpu().numpy()
         )
+        print("metrix")
 
         results.append(
             (loss, perplexity, f1, precision, recall, cross_entropy)

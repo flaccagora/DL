@@ -93,8 +93,17 @@ class Trainer:
         self.iter_num = 0
         self.iter_time = time.time()
         data_iter = iter(train_loader)
+
+        training_iters = tqdm.tqdm(
+                range(config.max_iters),
+                total=self.config.max_iters,
+                dynamic_ncols=True
+                )
+            
+        training_iters.update(1)
+
         
-        for self.iter_num in trange(config.max_iters):
+        for self.iter_num in range(config.max_iters):
 
             b_sz = len(next(iter(train_loader))[0])
             print(f"[GPU{self.gpu_id}] Epoch {self.iter_num} | Batchsize: {b_sz} | Steps: {len(train_loader)}")
@@ -117,8 +126,8 @@ class Trainer:
                 )
                 self.optimizer.step()
 
-                if self.gpu_id == 0:
-                    self.trigger_callbacks("on_batch_end")
+                # if self.gpu_id == 0:
+                #     self.trigger_callbacks("on_batch_end")
                 
                 self.iter_num += 1
                 tnow = time.time()
@@ -128,3 +137,5 @@ class Trainer:
                 # training_iters.update(1)
             if self.gpu_id == 0 and self.iter_num % config.save == 0:
                 self._save_checkpoint(self.iter_num)
+            
+            training_iters.update(1)
