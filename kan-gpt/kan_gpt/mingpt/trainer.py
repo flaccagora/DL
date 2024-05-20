@@ -36,7 +36,7 @@ class Trainer:
         C.grad_norm_clip = 1.0
         return C
 
-    def __init__(self, config, model, train_dataset, gpu_id=0):
+    def __init__(self, config, model, train_dataset, gpu_id):
         self.config = config
         self.gpu_id = gpu_id
         self.model = model.to(gpu_id)
@@ -46,12 +46,12 @@ class Trainer:
         self.model = DDP(model, device_ids=[gpu_id])
 
         # determine the device we'll train on
-        if config.device == "auto":
-            self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        else:
-            self.device = config.device
-        self.model = self.model.to(self.device)
-        print("running on device", self.device)
+        # if config.device == "auto":
+        #     self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        # else:
+        #     self.device = config.device
+        # self.model = self.model.to(self.device)
+        # print("running on device", self.device)
 
         # variables that will be assigned to trainer class later for logging and etc
         self.iter_num = 0

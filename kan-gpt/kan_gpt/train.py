@@ -176,8 +176,9 @@ def main(rank, args):
 
     test_dataset = Dataset("test", "gpt2")
 
-    print("test_dataset: ", len(test_dataset))
-    print("train_dataset: ", len(train_dataset))
+    if rank==0:
+        print("test_dataset: ", len(test_dataset))
+        print("train_dataset: ", len(train_dataset))
 
     if args.architecture == "KAN":
         GPT = KAN_GPT
