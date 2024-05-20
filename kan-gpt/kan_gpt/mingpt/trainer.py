@@ -126,16 +126,19 @@ class Trainer:
                 )
                 self.optimizer.step()
 
-                # if self.gpu_id == 0:
-                #     self.trigger_callbacks("on_batch_end")
                 
                 self.iter_num += 1
                 tnow = time.time()
                 self.iter_dt = tnow - self.iter_time
                 self.iter_time = tnow
-
+           
+                training_iters.update(1)
+               
                 # training_iters.update(1)
             if self.gpu_id == 0 and self.iter_num % config.save == 0:
                 self._save_checkpoint(self.iter_num)
             
-            training_iters.update(1)
+            # if self.gpu_id == 0:
+            #     self.trigger_callbacks("on_batch_end")
+
+
