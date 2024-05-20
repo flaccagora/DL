@@ -96,8 +96,8 @@ def eval_split(
         dataset, batch_size=batch_size, num_workers=0, drop_last=False
     )
     for b, (x, y) in enumerate(loader):
-        x = x.to(trainer.device)
-        y = y.to(trainer.device)
+        x = x.to(trainer.gpu_id)
+        y = y.to(trainer.gpu_id)
 
         block_size = y.shape[1]
 
