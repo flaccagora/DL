@@ -147,7 +147,7 @@ def save_model(
 
 def main(rank, args, run=None):
     
-    ddp_setup(rank, 4)
+    ddp_setup(rank, 8)
 
     config = {
         "model_type": args.model_type,
