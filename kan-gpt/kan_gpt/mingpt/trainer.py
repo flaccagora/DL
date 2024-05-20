@@ -45,14 +45,6 @@ class Trainer:
         self.callbacks = defaultdict(list)
         self.model = DDP(model, device_ids=[gpu_id])
 
-        # determine the device we'll train on
-        # if config.device == "auto":
-        #     self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        # else:
-        #     self.device = config.device
-        # self.model = self.model.to(self.device)
-        # print("running on device", self.device)
-
         # variables that will be assigned to trainer class later for logging and etc
         self.iter_num = 0
         self.iter_time = 0.0
