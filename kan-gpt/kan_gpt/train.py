@@ -145,9 +145,9 @@ def save_model(
     return save_path
 
 
-def main(rank, world_size, args, run=None):
+def main(rank, args, run=None):
     
-    ddp_setup(rank, world_size)
+    ddp_setup(rank, 4)
 
     config = {
         "model_type": args.model_type,
@@ -342,4 +342,5 @@ if __name__ == "__main__":
     args.batch_size = int(args.batch_size)
 
     world_size = torch.cuda.device_count()
-    mp.spawn(main, world_size, args, nprocs=world_size)
+    print(world_size, "\n\n")
+    mp.spawn(main, args, nprocs=world_size)
