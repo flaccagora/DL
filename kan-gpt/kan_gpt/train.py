@@ -201,7 +201,7 @@ def main(rank, args):
     train_config.batch_size = int(args.batch_size)
     train_config.device = args.device
     train_config.save = args.save
-    trainer = Trainer(train_config, model, train_dataset)
+    trainer = Trainer(train_config, model, train_dataset, rank)
 
     if run is None:
         run = wandb.init(project="KAN-GPT", config=config)
