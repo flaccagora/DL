@@ -19,6 +19,7 @@ from kan_gpt.settings import settings
 from torch.distributed import init_process_group, destroy_process_group
 import os
 import torch.multiprocessing as mp
+import tqdm as tqdm
 
 
 def ddp_setup(rank, world_size):
@@ -68,22 +69,22 @@ def metrics(y, y_pred):
     # Perplexity
     perplexity = 2**cross_entropy
 
-    # Predicted classes
-    y_pred_class = np.argmax(y_pred, axis=-1)
+    # # Predicted classes
+    # y_pred_class = np.argmax(y_pred, axis=-1)
 
-    # True Positives, False Positives, and False Negatives
-    TP = np.sum(y == y_pred_class)
-    FP = np.sum(y != y_pred_class)
-    FN = FP  # Binary setup, false positives and false negatives are equivalent
+    # # True Positives, False Positives, and False Negatives
+    # TP = np.sum(y == y_pred_class)
+    # FP = np.sum(y != y_pred_class)
+    # FN = FP  # Binary setup, false positives and false negatives are equivalent
 
-    # Precision, Recall
-    precision = TP / (TP + FP)
-    recall = TP / (TP + FN)
+    # # Precision, Recall
+    # precision = TP / (TP + FP)
+    # recall = TP / (TP + FN)
 
-    # F1 Score
-    f1 = 2 * (precision * recall) / (precision + recall)
+    # # F1 Score
+    # f1 = 2 * (precision * recall) / (precision + recall)
 
-    return perplexity, f1, precision, recall, cross_entropy
+    return perplexity # , f1, precision, recall, cross_entropy
 
 
 def eval_split(
@@ -95,34 +96,48 @@ def eval_split(
     loader = DataLoader(
         dataset, batch_size=batch_size, num_workers=0, drop_last=False
     )
+    length = max_batches if max_batches is not None else len(loader)
+    training_iters = tqdm.tqdm(
+            range(length),
+            total=length,
+            dynamic_ncols=True
+            )
+        
+    training_iters.update(1)
+
+
     for b, (x, y) in enumerate(loader):
         x = x.to(trainer.gpu_id)
         y = y.to(trainer.gpu_id)
 
-        #block_size = y.shape[1]
+        block_size = y.shape[1]
 
         logits, loss = model(x, y)
 
-        #probs = F.softmax(logits, dim=-1)
+        probs = F.softmax(logits, dim=-1)
 
-       # _, y_pred = torch.topk(probs, k=block_size, dim=-1)
+        _, y_pred = torch.topk(probs, k=block_size, dim=-1)
 
         #perplexity, f1, precision, recall, cross_entropy = metrics(
         #    y=y.cpu().numpy(), y_pred=probs.cpu().numpy()
         #)
 
-        perplexity = 0
+        perplexity = metrics(y=y.cpu().numpy(), y_pred=probs.cpu().numpy())
         f1 = 0
         precision = 0
         recall = 0
         cross_entropy = 0
 
         results.append(
-            (loss, perplexity, f1, precision, recall, cross_entropy)
+            (loss, perplexity)#, f1, precision, recall, cross_entropy)
         )
+        
+        training_iters.update(1)
 
         if max_batches is not None and b + 1 >= max_batches:
             break
+        
+
     rt = torch.tensor(results, dtype=torch.float)
     print("%s loss: %.2f" % (split, rt.mean(dim=0)[0]))
     return rt.mean(dim=0)
@@ -153,7 +168,7 @@ def save_model(
 
 def main(rank, args):
     
-    ddp_setup(rank, 4)
+    ddp_setup(rank, args.num_gpus)
 
     config = {
         "model_type": args.model_type,
@@ -208,22 +223,24 @@ def main(rank, args):
     train_config.batch_size = int(args.batch_size)
     train_config.device = args.device
     train_config.save = args.save
+    train_config.eval = args.eval
     trainer = Trainer(train_config, model, train_dataset, rank)
+    
+    if args.from_checkpoint:
+        trainer._load_checkpoint(PATH=args.from_checkpoint)
 
-    run = None
-    if run is None:
-        run = wandb.init(project="KAN-GPT", config=config)
-    wandb.watch(model)
+    
+    # run = None
+    # if run is None:
+    #     run = wandb.init(project="KAN-GPT", config=config)
+    # wandb.watch(model)
 
     def batch_end_callback(trainer):
         # TODO: Add W&B Hooks
         if trainer.iter_num % args.eval == 0 and trainer.iter_num !=0:
 
-            save_model(model=trainer.model, run=run)
-
-
             print(
-                f"iter_dt {trainer.iter_dt * 1000:.2f}ms; "
+                # f"iter_dt {trainer.iter_dt * 1000:.2f}ms; "
                 f"iter {trainer.iter_num}: "
                 f"train loss {trainer.loss.item():.5f}"
             )
@@ -308,10 +325,10 @@ def main(rank, args):
 
     trainer.run()
 
-    if rank==0:
-        save_model(model=model, run=run)
+    # if rank==0:
+    #     save_model(model=model, run=run)
 
-    wandb.finish()
+    #wandb.finish()
 
     destroy_process_group()
 
@@ -327,13 +344,15 @@ if __name__ == "__main__":
     parser.add_argument("--max_iters", default=2000)
     parser.add_argument("--num_workers", default=0)
     parser.add_argument("--batch_size", default=64)
-    parser.add_argument("--eval", default=50)
-    parser.add_argument("--save", default=1000)
+    parser.add_argument("--eval", type=int, default=50)
+    parser.add_argument("--save", type=int, default=1000)
+    parser.add_argument("--num_gpus",type=int, default=4)
+    parser.add_argument("--from_checkpoint",type=str, default=None)
 
     parser.add_argument(
         "--dataset",
         choices=["webtext", "tinyshakespeare"],
-        default="tinyshakespeare",
+        default="webtext",
     )
     parser.add_argument(
         "--architecture", choices=["MLP", "KAN"], default="KAN"
@@ -350,5 +369,12 @@ if __name__ == "__main__":
     args.batch_size = int(args.batch_size)
 
     world_size = torch.cuda.device_count()
-    print(world_size, "\n\n")
+
+    if int(args.num_gpus) < world_size:
+        world_size = args.num_gpus 
+        print("\n\nNumber of GPUs is less than available. only using ", args.num_gpus, " GPUs.\n\n")
+
     mp.spawn(main, args= (args,), nprocs=world_size)
+
+    # salloc -p boost_usr_prod -A ict24_dssc_gpu -N1 -n4 -t 00:30:00 --gres=gpu:4 --qos=boost_qos_dbg
+    # WANDB_MODE=offline  python3 -m kan_gpt.train --architecture MLP --batch_size 32 --dataset webtext --max_iters 100 --num_gpus=4 --save 100 --from_checkpoint checkpoint_50.pt
