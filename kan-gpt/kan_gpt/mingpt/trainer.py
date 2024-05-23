@@ -178,11 +178,11 @@ class Trainer:
                     self.batch_end_callback()
 
                 train_running_loss += self.loss.item()
-                print(train_running_loss / (i + 1))
-                # wandb.log(
-                #     {
-                #         "train_running_loss": train_running_loss / (i + 1),
-                #     })
+                # print(train_running_loss / (i + 1))
+                wandb.log(
+                    {
+                        "train_running_loss": train_running_loss / (i + 1),
+                    })
             
             
     def batch_end_callback(self):
@@ -203,12 +203,12 @@ class Trainer:
             with torch.no_grad():
                 train_loss = self.eval_split(
                     "train",
-                    max_batches=6
+                    max_batches=10
                 )
 
                 test_loss = self.eval_split(
                     "test",
-                    max_batches=6
+                    max_batches=1000
                 )
 
                 # (
@@ -302,7 +302,6 @@ class Trainer:
         #rt = torch.tensor(results, dtype=torch.float)
         #print("%s loss: %.2f" % (split, rt.mean(dim=0)[0]))
         
-        print( running_loss / (b + 1))
         return running_loss / (b + 1)   
 
         
