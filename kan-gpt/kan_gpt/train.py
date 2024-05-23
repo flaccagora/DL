@@ -224,16 +224,16 @@ def main(rank, args):
     train_config.device = args.device
     train_config.save = args.save
     train_config.eval = args.eval
-    trainer = Trainer(train_config, model, train_dataset, rank)
+    trainer = Trainer(train_config, model, train_dataset, test_dataset, rank)
     
     if args.from_checkpoint:
         trainer._load_checkpoint(PATH=args.from_checkpoint)
 
     
-    # run = None
-    # if run is None:
-    #     run = wandb.init(project="KAN-GPT", config=config)
-    # wandb.watch(model)
+    run = None
+    if run is None:
+        run = wandb.init(project="KAN-GPT", config=config)
+    wandb.watch(model)
 
     def batch_end_callback(trainer):
         # TODO: Add W&B Hooks
@@ -328,7 +328,7 @@ def main(rank, args):
     # if rank==0:
     #     save_model(model=model, run=run)
 
-    #wandb.finish()
+    wandb.finish()
 
     destroy_process_group()
 

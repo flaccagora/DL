@@ -7,15 +7,19 @@ import time
 from collections import defaultdict
 
 import torch
+import torch.distributed
 from torch.utils.data.dataloader import DataLoader
 
 import tqdm as tqdm
-from tqdm import trange
 from kan_gpt.mingpt.utils import CfgNode as CN
 
 import torch.multiprocessing as mp
 from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
+
+import torch.nn.functional as F
+import wandb
+import numpy as np
 
 
 class Trainer:
@@ -36,13 +40,14 @@ class Trainer:
         C.grad_norm_clip = 1.0
         return C
 
-    def __init__(self, config, model, train_dataset, gpu_id):
+    def __init__(self, config, model, train_dataset,test_dataset, gpu_id):
         self.config = config
         self.gpu_id = gpu_id
         self.model = model.to(gpu_id)
         self.optimizer = model.configure_optimizers(config)
 
         self.train_dataset = train_dataset
+        self.test_dataset = test_dataset
         self.callbacks = defaultdict(list)
         self.model = DDP(model, device_ids=[gpu_id])
 
@@ -125,7 +130,7 @@ class Trainer:
 
         
         for self.epoch in range(config.max_iters):
-
+            train_running_loss = 0.0
             b_sz = len(next(iter(train_loader))[0])
             print(f"[GPU{self.gpu_id}] Epoch {self.iter_num} | Batchsize (perGPU): {b_sz} | Steps (perGPU): {len(train_loader)}")
 
@@ -169,7 +174,187 @@ class Trainer:
                 torch.distributed.barrier()
 
                 if self.iter_num % config.eval == 0 and self.iter_num!=0:
-                    self.trigger_callbacks("on_batch_end")
+                    #self.trigger_callbacks("on_batch_end")
+                    self.batch_end_callback()
 
+                train_running_loss += self.loss.item()
+                print(train_running_loss / (i + 1))
+                # wandb.log(
+                #     {
+                #         "train_running_loss": train_running_loss / (i + 1),
+                #     })
             
             
+    def batch_end_callback(self):
+        # TODO: Add W&B Hooks
+        if self.iter_num % self.config.eval == 0 and self.iter_num !=0:
+
+            print(
+                # f"iter_dt {self.iter_dt * 1000:.2f}ms; "
+                f"iter {self.iter_num}: "
+                f"train loss {self.loss.item():.5f}"
+            )
+
+            print("=" * 20)
+            print("EVAL")
+            print("=" * 20)
+
+            self.model.eval()
+            with torch.no_grad():
+                train_loss = self.eval_split(
+                    "train",
+                    max_batches=6
+                )
+
+                test_loss = self.eval_split(
+                    "test",
+                    max_batches=6
+                )
+
+                # (
+                #     train_loss,
+                #     # train_perplexity,
+                #     # train_f1,
+                #     # train_precision,
+                #     # train_recall,
+                #     # train_cross_entropy,
+                # ) = train_score
+                # (
+                #     test_loss,
+                #     # test_perplexity,
+                #     # test_f1,
+                #     # test_precision,
+                #     # test_recall,
+                #     # test_cross_entropy,
+                # ) = test_score
+
+            self.model.train()
+            print("train_loss: ", train_loss)
+            # print("train_perplexity: ", train_perplexity)
+            # print("train_f1: ", train_f1)
+            # print("train_precision: ", train_precision)
+            # print("train_recall: ", train_recall)
+            # print("train_cross_entropy: ", train_cross_entropy)
+
+            print("test_loss: ", test_loss)
+            # print("test_perplexity: ", test_perplexity)
+            # print("test_f1: ", test_f1)
+            # print("test_precision: ", test_precision)
+            # print("test_recall: ", test_recall)
+            # print("test_cross_entropy: ", test_cross_entropy)
+
+            wandb.log(
+                {
+                    "train_loss": train_loss,
+                    #"train_perplexity": train_perplexity,
+                    # "train_f1": train_f1,
+                    # "train_precision": train_precision,
+                    # "train_recall": train_recall,
+                    # "train_cross_entropy": train_cross_entropy,
+                    # "test_loss": test_loss,
+                    # "test_perplexity": test_perplexity,
+                    # "test_f1": test_f1,
+                    # "test_precision": test_precision,
+                    # "test_recall": test_recall,
+                    # "test_cross_entropy": test_cross_entropy,
+                }
+            )
+
+            print("=" * 20)
+
+            # print("reduced loss: ",torch.distributed.all_reduce(train_loss))
+
+
+    def eval_split(self, split, max_batches=5):
+        # dataset = {"train": self.train_dataset, "test": self.test_dataset}[split]
+        dataset = self.train_dataset if split == "train" else self.test_dataset
+        results = []
+
+        loader = DataLoader(
+            dataset, batch_size=self.config.batch_size, num_workers=0, drop_last=False,
+        )
+        tot : int = max_batches if max_batches is not None else len(loader)
+        training_iters = tqdm.tqdm(
+                range(tot),
+                total=tot,
+                dynamic_ncols=True
+                )
+            
+        training_iters.update(1)
+
+        running_loss = 0.0            
+
+        for b, (x, y) in enumerate(loader):
+            x = x.to(self.gpu_id)
+            y = y.to(self.gpu_id)
+
+            # block_size = y.shape[1]
+
+            _ , loss = self.model(x, y)
+
+            running_loss += loss.item()
+            training_iters.update(1)
+
+            if max_batches is not None and b + 1 >= max_batches:
+                break
+            
+
+        #rt = torch.tensor(results, dtype=torch.float)
+        #print("%s loss: %.2f" % (split, rt.mean(dim=0)[0]))
+        
+        print( running_loss / (b + 1))
+        return running_loss / (b + 1)   
+
+        
+
+    def metrics(self, y, y_pred):
+        """
+        y: (B, T) INT - True labels
+        y_pred: (B, T, C) FLOAT - Predicted probabilities
+
+        Returns:
+        - Perplexity
+        - F1 Score
+        - Precision
+        - Recall
+        - Cross Entropy
+        """
+
+        # Make sure y_pred is between 0 and 1
+        if not (np.all(y_pred >= 0) and np.all(y_pred <= 1)):
+            # Softmax
+            y_pred = np.exp(y_pred) / np.sum(
+                np.exp(y_pred), axis=-1, keepdims=True
+            )
+
+        assert np.all(y_pred >= 0) and np.all(
+            y_pred <= 1
+        ), "y_pred must be between 0 and 1"
+
+        # Add a small epsilon for numerical stability
+        epsilon = 1e-9
+        y_pred = np.clip(y_pred, epsilon, 1 - epsilon)
+
+        # Cross Entropy
+        y_one_hot = np.eye(y_pred.shape[-1])[y]
+        cross_entropy = -np.mean(np.sum(y_one_hot * np.log(y_pred), axis=-1))
+
+        # Perplexity
+        perplexity = 2**cross_entropy
+
+        # # Predicted classes
+        # y_pred_class = np.argmax(y_pred, axis=-1)
+
+        # # True Positives, False Positives, and False Negatives
+        # TP = np.sum(y == y_pred_class)
+        # FP = np.sum(y != y_pred_class)
+        # FN = FP  # Binary setup, false positives and false negatives are equivalent
+
+        # # Precision, Recall
+        # precision = TP / (TP + FP)
+        # recall = TP / (TP + FN)
+
+        # # F1 Score
+        # f1 = 2 * (precision * recall) / (precision + recall)
+
+        return perplexity # , f1, precision, recall, cross_entropy
