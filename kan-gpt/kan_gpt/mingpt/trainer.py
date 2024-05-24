@@ -183,6 +183,7 @@ class Trainer:
                 wandb.log(
                     {
                         "train_running_loss": train_running_loss / (i + 1),
+                        "lr": self.optimizer.param_groups[-1]['lr']
                     })
             
             
