@@ -226,6 +226,8 @@ def main(rank, args):
     train_config.device = args.device
     train_config.save = args.save
     train_config.eval = args.eval
+    train_config.betas = (0.9, 0.999)
+    train_config.weight_decay = 0.01
     trainer = Trainer(train_config, model, train_dataset, test_dataset, rank)
     
     if args.from_checkpoint:
@@ -234,7 +236,7 @@ def main(rank, args):
     
     run = None
     if run is None:
-        run = wandb.init(project="KAN-GPT", config=config)
+        run = wandb.init(project="KAN-GPT", config=config, )
     wandb.watch(model)
 
     def batch_end_callback(trainer):
@@ -342,7 +344,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser("KAN-GPT Trainer")
     parser.add_argument("--model_type", default="gpt-mini")
     parser.add_argument("--dummy_dataset", action="store_true")
-    parser.add_argument("--learning_rate", default=5e-3)
+    parser.add_argument("--learning_rate", default=3e-4)
     parser.add_argument("--max_iters", default=2000)
     parser.add_argument("--num_workers", default=0)
     parser.add_argument("--batch_size", default=64)

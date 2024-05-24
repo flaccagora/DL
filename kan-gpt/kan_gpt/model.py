@@ -454,7 +454,10 @@ class GPT(nn.Module):
             lr=train_config.learning_rate,
             betas=train_config.betas,
         )
-        return optimizer
+
+        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lambda step: 1 - step / 1e6 )
+
+        return optimizer, scheduler
 
     def forward(
         self,

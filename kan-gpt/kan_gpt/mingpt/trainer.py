@@ -44,7 +44,7 @@ class Trainer:
         self.config = config
         self.gpu_id = gpu_id
         self.model = model.to(gpu_id)
-        self.optimizer = model.configure_optimizers(config)
+        self.optimizer, self.scheduler = model.configure_optimizers(config)
 
         self.train_dataset = train_dataset
         self.test_dataset = test_dataset
@@ -117,7 +117,6 @@ class Trainer:
         train_loader = self.prepare_dataloader()
 
         model.train()
-        data_iter = iter(train_loader)
 
         training_iters = tqdm.tqdm(
                 range(len(train_loader)),
@@ -161,6 +160,7 @@ class Trainer:
                     model.parameters(), config.grad_norm_clip
                 )
                 self.optimizer.step()
+                self.scheduler.step()
                 
                 self.iter_num += 1
                 training_iters.update(1)
