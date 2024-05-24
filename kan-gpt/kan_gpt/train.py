@@ -211,6 +211,8 @@ def main(rank, args):
     model_config.model_type = model_type
     model_config.vocab_size = train_dataset.get_vocab_size()
     model_config.block_size = train_dataset.get_block_size()
+    if args.seq_len:
+        model_config.block_size = args.seq_len
     model = GPT(model_config)
 
     # create a Trainer object
@@ -348,7 +350,7 @@ if __name__ == "__main__":
     parser.add_argument("--save", type=int, default=1000)
     parser.add_argument("--num_gpus",type=int, default=4)
     parser.add_argument("--from_checkpoint",type=str, default=None)
-
+    parser.add_argument("--seq_len",type=int, default=None)
     parser.add_argument(
         "--dataset",
         choices=["webtext", "tinyshakespeare"],
