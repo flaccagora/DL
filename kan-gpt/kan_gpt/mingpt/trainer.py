@@ -70,7 +70,7 @@ class Trainer:
         return  DataLoader(
             self.train_dataset,
             sampler=DistributedSampler(self.train_dataset),
-            shuffle=False,
+            shuffle=True,
             pin_memory=True,
             batch_size=self.config.batch_size,
             num_workers=self.config.num_workers,
