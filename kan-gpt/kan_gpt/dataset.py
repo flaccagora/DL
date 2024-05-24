@@ -13,7 +13,7 @@ class WebTextDataset(Dataset):
     WebText Dataset
     """
 
-    def __init__(self, split, model_type, block_size=1024, vocab_size=50257):
+    def __init__(self, split, model_type, block_size=64, vocab_size=50257):
         assert split in {"train", "test", "valid"}
 
         self.split = split
@@ -97,7 +97,7 @@ class TinyShakespeareDataset(Dataset):
         self,
         split,
         model_type,
-        block_size=1024,
+        block_size=64,
         vocab_size=50257,
     ):
         assert split in {"train", "test", "valid"}
