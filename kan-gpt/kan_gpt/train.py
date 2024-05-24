@@ -226,7 +226,7 @@ def main(rank, args):
     train_config.device = args.device
     train_config.save = args.save
     train_config.eval = args.eval
-    train_config.betas = (0.9, 0.999)
+    # train_config.betas = (0.9, 0.999)
     train_config.weight_decay = 0.01
     trainer = Trainer(train_config, model, train_dataset, test_dataset, rank)
     
