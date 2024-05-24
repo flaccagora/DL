@@ -53,7 +53,7 @@ class Trainer:
 
         # variables that will be assigned to trainer class later for logging and etc
         self.iter_num = 0
-        self.epoch = 0
+        self.start_epoch = 0
 
 
     def add_callback(self, onevent: str, callback):
@@ -97,7 +97,7 @@ class Trainer:
 
         ckpt = torch.load(PATH, map_location='cuda')
 
-        self.epoch = ckpt['epoch']
+        self.start_epoch = ckpt['epoch']
         self.iter_num = ckpt['step']
         self.config = ckpt['config']
         self.model.load_state_dict(ckpt['model'])
@@ -117,7 +117,6 @@ class Trainer:
         train_loader = self.prepare_dataloader()
 
         model.train()
-        self.iter_num = 0
         data_iter = iter(train_loader)
 
         training_iters = tqdm.tqdm(
@@ -129,7 +128,7 @@ class Trainer:
         training_iters.update(1)
 
         
-        for self.epoch in range(config.max_iters):
+        for self.epoch in range(self.start_epoch, config.max_iters):
             train_running_loss = 0.0
             b_sz = len(next(iter(train_loader))[0])
             print(f"[GPU{self.gpu_id}] Epoch {self.iter_num} | Batchsize (perGPU): {b_sz} | Steps (perGPU): {len(train_loader)}")
@@ -140,11 +139,11 @@ class Trainer:
             
             for i,(x, y) in enumerate(train_loader):
                 
-                if i < self.iter_num - (len(train_loader) * self.epoch):
+                if i <= self.iter_num - (len(train_loader) * self.epoch):
                     training_iters.update(1)
                     continue
 
-                
+
                 x = x.to(self.gpu_id)
                 y = y.to(self.gpu_id)
                 
