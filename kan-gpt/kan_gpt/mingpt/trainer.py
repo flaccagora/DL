@@ -44,7 +44,8 @@ class Trainer:
         self.config = config
         self.gpu_id = gpu_id
         self.model = model.to(gpu_id)
-        self.optimizer, self.scheduler = model.configure_optimizers(config)
+        self.optimizer = model.configure_optimizers(config)
+        self.scheduler = torch.optim.lr_scheduler.LambdaLR(self.optimizer, lambda step: 1 - step / 1e6 )
 
         self.train_dataset = train_dataset
         self.test_dataset = test_dataset
@@ -83,7 +84,7 @@ class Trainer:
                         'step': self.iter_num,
                         'model': self.model.state_dict(),
                         'optimizer': self.optimizer.state_dict(),
-                        # 'scheduler': self.scheduler.state_dict(),
+                        'scheduler': self.scheduler.state_dict(),
                         'config': self.config
                         }
         
@@ -102,6 +103,7 @@ class Trainer:
         self.config = ckpt['config']
         self.model.load_state_dict(ckpt['model'])
         self.optimizer.load_state_dict(ckpt['optimizer'])
+        self.scheduler.load_state_dict(ckpt['scheduler'])
 
         print("Checkpoint config:\n ", self.config)
         
