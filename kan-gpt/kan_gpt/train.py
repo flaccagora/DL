@@ -226,8 +226,9 @@ def main(rank, args):
     train_config.device = args.device
     train_config.save = args.save
     train_config.eval = args.eval
-    # train_config.betas = (0.9, 0.999)
+    train_config.betas = (0.9, 0.999)
     # train_config.weight_decay = 0.01
+    train_config.eps = 1e-8
     trainer = Trainer(train_config, model, train_dataset, test_dataset, rank)
     
     if args.from_checkpoint:
@@ -344,7 +345,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser("KAN-GPT Trainer")
     parser.add_argument("--model_type", default="gpt-mini")
     parser.add_argument("--dummy_dataset", action="store_true")
-    parser.add_argument("--learning_rate", default=5e-3)
+    parser.add_argument("--learning_rate", default=2e-5)
     parser.add_argument("--max_iters", default=2000)
     parser.add_argument("--num_workers", default=0)
     parser.add_argument("--batch_size", default=64)

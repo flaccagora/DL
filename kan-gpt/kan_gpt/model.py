@@ -455,9 +455,9 @@ class GPT(nn.Module):
             betas=train_config.betas,
         )
 
-        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lambda step: 1 - step / 1e6 )
+        # scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lambda step: 1 - step / 1e6 )
 
-        return optimizer, scheduler
+        return optimizer
 
     def forward(
         self,

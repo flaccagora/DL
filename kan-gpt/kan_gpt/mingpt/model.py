@@ -339,6 +339,7 @@ class GPT(nn.Module):
             optim_groups,
             lr=train_config.learning_rate,
             betas=train_config.betas,
+            eps=train_config.eps,
         )
         return optimizer
 
