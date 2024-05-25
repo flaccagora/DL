@@ -45,7 +45,7 @@ class Trainer:
         self.gpu_id = gpu_id
         self.model = model.to(gpu_id)
         self.optimizer = model.configure_optimizers(config)
-        #self.scheduler = torch.optim.lr_scheduler.LambdaLR(self.optimizer, lambda step: 1 - step / 1e6 )
+        self.scheduler = torch.optim.lr_scheduler.LambdaLR(self.optimizer, lambda step: 1 - step / 1e6 )
 
         self.train_dataset = train_dataset
         self.test_dataset = test_dataset
@@ -162,7 +162,7 @@ class Trainer:
                     model.parameters(), config.grad_norm_clip
                 )
                 self.optimizer.step()
-                #self.scheduler.step()
+                self.scheduler.step()
                 
                 self.iter_num += 1
                 training_iters.update(1)
