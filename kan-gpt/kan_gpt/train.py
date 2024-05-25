@@ -345,7 +345,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser("KAN-GPT Trainer")
     parser.add_argument("--model_type", default="gpt-mini")
     parser.add_argument("--dummy_dataset", action="store_true")
-    parser.add_argument("--learning_rate", default=2e-5)
+    parser.add_argument("--learning_rate", default=1e-2)
     parser.add_argument("--max_iters", default=2000)
     parser.add_argument("--num_workers", default=0)
     parser.add_argument("--batch_size", default=64)
