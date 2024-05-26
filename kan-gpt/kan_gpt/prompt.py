@@ -27,7 +27,7 @@ def main(args):
     model = GPT(model_config)
 
     if args.model_path is not None:
-        ckpt = torch.load(args.model_path, map_location=torch.device("cpu"))
+        ckpt = torch.load(args.model_path)
         print(ckpt.keys())
 
 
