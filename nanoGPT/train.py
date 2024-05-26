@@ -33,7 +33,7 @@ from model import GPTConfig, GPT
 # default config values designed to train a gpt2 (124M) on OpenWebText
 # I/O
 out_dir = 'out'
-eval_interval = 2000
+eval_interval = 1000
 log_interval = 1
 eval_iters = 200
 eval_only = False # if True, script exits right after the first eval
@@ -252,6 +252,19 @@ t0 = time.time()
 local_iter_num = 0 # number of iterations in the lifetime of this process
 raw_model = model.module if ddp else model # unwrap DDP container if needed
 running_mfu = -1.0
+
+# tqdm progress bar
+if master_process:
+    import tqdm
+    training_iters = tqdm.tqdm(
+            range(max_iters),
+            total=max_iters,
+            dynamic_ncols=True
+            )
+        
+    training_iters.update(1)
+
+
 while True:
 
     # determine and set the learning rate for this iteration
@@ -327,6 +340,8 @@ while True:
         print(f"iter {iter_num}: loss {lossf:.4f}, time {dt*1000:.2f}ms, mfu {running_mfu*100:.2f}%")
     iter_num += 1
     local_iter_num += 1
+    if master_process:
+        training_iters.update(1)
 
     # termination conditions
     if iter_num > max_iters:
