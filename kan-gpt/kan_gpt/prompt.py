@@ -25,6 +25,20 @@ def main(args):
     model = GPT(model_config)
 
     if args.model_path is not None:
+        ckpt = torch.load(args.model_path, map_location=torch.device("cpu"))
+        print(ckpt.keys())
+
+
+        start_epoch = ckpt['epoch']
+        iter_num = ckpt['step']
+        config = ckpt['config']
+
+        print("Checkpoint config:\n ", config)
+        print("Loaded model from epoch: ", start_epoch)
+        print("Loaded model from iteration: ", iter_num)
+
+#        model.load_state_dict(ckpt['model'])
+
         assert os.path.isfile(args.model_path)
 
     tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
@@ -52,9 +66,9 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser("KAN-GPT Trainer")
-    parser.add_argument("--model_type", default="gpt-micro")
+    parser.add_argument("--model_type", default="gpt-mini")
     parser.add_argument("--model_path", default=None)
-    parser.add_argument("--max_tokens", default=100)
+    parser.add_argument("--max_tokens", default=10)
 
     parser.add_argument(
         "--prompt", default="Out of thy sleep. What is it thou didst say?"
@@ -72,5 +86,6 @@ if __name__ == "__main__":
 
     if args.device == "auto":
         args.device = "cuda" if torch.cuda.is_available() else "cpu"
+
 
     main(args)
