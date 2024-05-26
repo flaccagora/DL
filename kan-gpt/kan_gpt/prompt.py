@@ -12,6 +12,8 @@ def main(args):
 
     model_type = args.model_type
 
+    print("Model type: ", model_type)
+    print("Model architecture: ", args.architecture)
     if args.architecture == "KAN":
         GPT = KAN_GPT
     else:
@@ -37,7 +39,7 @@ def main(args):
         print("Loaded model from epoch: ", start_epoch)
         print("Loaded model from iteration: ", iter_num)
 
-#        model.load_state_dict(ckpt['model'])
+        model.load_state_dict(ckpt['model'])
 
         assert os.path.isfile(args.model_path)
 
