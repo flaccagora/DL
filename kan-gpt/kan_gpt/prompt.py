@@ -26,8 +26,11 @@ def main(args):
     model_config.block_size = 64
     model = GPT(model_config)
 
+
     if args.model_path is not None:
-        ckpt = torch.load(args.model_path)
+        # ckpt = torch.load(args.model_path, map_location="cpu")
+        ckpt = torch.load(args.model_path, map_location='cuda')
+
         print(ckpt.keys())
 
 
