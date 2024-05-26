@@ -21,7 +21,7 @@ def main(args):
     model_config = GPT.get_default_config()
     model_config.model_type = model_type
     model_config.vocab_size = 50257
-    model_config.block_size = 1024
+    model_config.block_size = 64
     model = GPT(model_config)
 
     if args.model_path is not None:
