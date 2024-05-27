@@ -7,7 +7,7 @@ class KANLinear(torch.nn.Module):
         self,
         in_features,
         out_features,
-        grid_size=5,
+        grid_size=3,
         spline_order=3,
         scale_noise=0.1,
         scale_base=1.0,
