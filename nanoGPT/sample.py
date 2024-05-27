@@ -26,7 +26,6 @@ exec(open('configurator.py').read()) # overrides from command line or config fil
 # -----------------------------------------------------------------------------
 architecture = 'KAN'
 if architecture == 'KAN':
-    from model import KANConfig, KAN
     GPTConfig = KANConfig
     GPT = KAN
 # -----------------------------------------------------------------------------
