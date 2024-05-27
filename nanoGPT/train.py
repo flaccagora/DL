@@ -28,11 +28,13 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import init_process_group, destroy_process_group
 
 from model import GPTConfig, GPT
+from model_kan import GPT as KAN_GPT
+from model_kan import GPTConfig as KAN_GPTConfig
 
 # -----------------------------------------------------------------------------
 # default config values designed to train a gpt2 (124M) on OpenWebText
 # I/O
-out_dir = 'out'
+out_dir = 'out_mlp'
 eval_interval = 300
 log_interval = 1
 eval_iters = 200
@@ -77,7 +79,13 @@ config_keys = [k for k,v in globals().items() if not k.startswith('_') and isins
 exec(open('configurator.py').read()) # overrides from command line or config file
 config = {k: globals()[k] for k in config_keys} # will be useful for logging
 # -----------------------------------------------------------------------------
-
+architecture = 'Kan'
+if architecture == 'Kan':
+    GPT = KAN_GPT
+    GPTConfig = KAN_GPTConfig
+    out_dir = 'out_kan'
+    print("Using KAN architecture\n")
+# -----------------------------------------------------------------------------
 # various inits, derived attributes, I/O setup
 ddp = int(os.environ.get('RANK', -1)) != -1 # is this a ddp run?
 if ddp:
