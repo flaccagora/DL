@@ -14,7 +14,7 @@ from dataclasses import dataclass
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
-from .efficient_kan.model import KAN as KAN
+from efficient_kan.model import KAN as KAN
 
 
 class LayerNorm(nn.Module):
