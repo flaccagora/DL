@@ -84,6 +84,7 @@ if architecture == 'Kan':
     GPT = KAN_GPT
     GPTConfig = KAN_GPTConfig
     out_dir = 'out_kan'
+    compile = False
     print("Using KAN architecture\n")
 # -----------------------------------------------------------------------------
 # various inits, derived attributes, I/O setup
