@@ -80,6 +80,8 @@ if architecture == 'Kan':
     GPT = KAN_GPT
     GPTConfig = KAN_GPTConfig
     out_dir = 'out_kan'
+    k = 3
+    grid = 5
     print("Using KAN architecture\n")
 # -----------------------------------------------------------------------------
 config_keys = [k for k,v in globals().items() if not k.startswith('_') and isinstance(v, (int, float, bool, str))]

@@ -81,9 +81,9 @@ class MLP(nn.Module):
 
     def __init__(self, config):
         super().__init__()
-        self.c_fc    = KAN(width=[config.n_embd, config.n_embd * 4])
+        self.c_fc    = KAN(width=[config.n_embd, config.n_embd * 4],grid=config.grid,k=config.k)
         self.gelu    = nn.GELU()
-        self.c_proj  = KAN(width=[4*config.n_embd, config.n_embd])
+        self.c_proj  = KAN(width=[4*config.n_embd, config.n_embd],grid=config.grid,k=config.k)
         self.dropout = nn.Dropout(config.dropout)
 
     def forward(self, x):
