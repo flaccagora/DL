@@ -266,7 +266,7 @@ class KAN(torch.nn.Module):
     def __init__(
         self,
         width,
-        grid=3,
+        grid=5,
         k=3,
         noise_scale=0.1,
         noise_scale_base=1.0,
