@@ -11,7 +11,8 @@ from . import (
     optimum_lm,
     textsynth,
     vllm_causallms,
-    MLP_GPT
+    MLP_GPT,
+    KAN_GPT
 )
 
 
