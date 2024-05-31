@@ -5,7 +5,7 @@
 #SBATCH --time=2:00:00
 #SBATCH --partition=DGX
 #SBATCH --exclusive
-#SBATCH --output=MLP-%j.out
+#SBATCH --output=KAN-%j.out
 
 date
 
