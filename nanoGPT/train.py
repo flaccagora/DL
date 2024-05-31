@@ -43,8 +43,8 @@ always_save_checkpoint = True # if True, always save a checkpoint after each eva
 init_from = 'scratch' # 'scratch' or 'resume' or 'gpt2*'
 # wandb logging
 wandb_log = True # disabled by default
-wandb_project = 'owt'
-wandb_run_name = 'kan_gpt2' # 'run' + str(time.time())
+wandb_project = 'GPT'
+wandb_run_name = 'GPT2' # 'run' + str(time.time())
 # data
 dataset = 'openwebtext'
 gradient_accumulation_steps = 5 * 8 # used to simulate larger batch sizes
@@ -53,7 +53,7 @@ block_size = 1024
 # model
 n_layer = 12
 n_head = 12
-n_embd = 360
+n_embd = 768
 dropout = 0.0 # for pretraining 0 is good, for finetuning try 0.1+
 bias = True # do we use bias inside LayerNorm and Linear layers?
 # adamw optimizer
@@ -75,18 +75,17 @@ device = 'cuda' # examples: 'cpu', 'cuda', 'cuda:0', 'cuda:1' etc., or try 'mps'
 dtype = 'bfloat16' if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else 'float16' # 'float32', 'bfloat16', or 'float16', the latter will auto implement a GradScaler
 compile = True # use PyTorch 2.0 to compile the model to be faster
 # -----------------------------------------------------------------------------
-architecture = 'Kan'
+architecture = 'MLP'
+k = None
+grid = None
 # -----------------------------------------------------------------------------
 config_keys = [k for k,v in globals().items() if not k.startswith('_') and isinstance(v, (int, float, bool, str))]
 exec(open('configurator.py').read()) # overrides from command line or config file
 config = {k: globals()[k] for k in config_keys} # will be useful for logging
 # -----------------------------------------------------------------------------
-if architecture == 'Kan':
+if architecture == 'KAN':
     GPT = KAN_GPT
     GPTConfig = KAN_GPTConfig
-    out_dir = 'out_kan'
-    k = 3
-    grid = 5
     print("Using KAN architecture\n")
 # -----------------------------------------------------------------------------
 # various inits, derived attributes, I/O setup
