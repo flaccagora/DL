@@ -41,7 +41,7 @@ from tqdm import tqdm
 from lm_eval.api.registry import register_model
 
 @register_model("KAN_GPT")
-class MLP_GPT(LM):
+class KAN_GPT(LM):
     
     def __init__(self,  batch_size, model=GPT(GPTConfig()), max_length = 1024,
                  init_from = 'resume',
@@ -88,7 +88,7 @@ class MLP_GPT(LM):
         self.ctx = nullcontext() if self.device_type == 'cpu' else torch.amp.autocast(device_type=self.device_type, dtype=self.ptdtype)
         
         
-        print("Loading MLP GPT checkpoint")
+        print("Loading KAN GPT checkpoint")
         ckpt_path = os.path.join(out_dir, 'ckpt.pt')
         checkpoint = torch.load(ckpt_path, map_location=device)
         gptconf = GPTConfig(**checkpoint['model_args'])
