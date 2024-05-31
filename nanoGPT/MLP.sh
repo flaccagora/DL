@@ -2,7 +2,7 @@
 
 #SBATCH --job-name=NN
 #SBATCH --nodes=1
-#SBATCH --time=2:00:00
+#SBATCH --time=4:00:00
 #SBATCH --partition=DGX
 #SBATCH --exclusive
 #SBATCH --output=MLP-%j.out
