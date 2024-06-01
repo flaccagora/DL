@@ -34,9 +34,15 @@ class CausalSelfAttention(nn.Module):
         super().__init__()
         assert config.n_embd % config.n_head == 0
         # key, query, value projections for all heads, but in a batch
-        self.c_attn = nn.Linear(config.n_embd, 3 * config.n_embd, bias=config.bias)
-        # output projection
-        self.c_proj = nn.Linear(config.n_embd, config.n_embd, bias=config.bias)
+        if config.architecture == 'KAN' and config.attn == 'KAN_Attn':
+            self.c_attn = KAN(width=[config.n_embd, 3 * config.n_embd],grid=config.grid,k=config.k)
+            self.c_proj = KAN(width=[config.n_embd, config.n_embd],grid=config.grid,k=config.k)
+        elif config.attn == 'MLP_Attn':
+            self.c_attn = nn.Linear(config.n_embd, 3 * config.n_embd, bias=config.bias)
+            self.c_proj = nn.Linear(config.n_embd, config.n_embd, bias=config.bias)
+        else:
+            raise ValueError(f"Unrecognized attention type or Incompatible architecture: {config.attn}")
+          
         # regularization
         self.attn_dropout = nn.Dropout(config.dropout)
         self.resid_dropout = nn.Dropout(config.dropout)
