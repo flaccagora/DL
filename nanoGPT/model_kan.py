@@ -125,7 +125,7 @@ class GPTConfig:
     grid: int = 3
     k: int = 3
     architecture: str = 'KAN'
-    attn: str = 'KAN_Attn'
+    attn: str = 'Linear_Attn'
 
 class GPT(nn.Module):
 
