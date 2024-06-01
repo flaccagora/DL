@@ -2,7 +2,7 @@
 
 #SBATCH --job-name=NN
 #SBATCH --nodes=1
-#SBATCH --time=4:00:00
+#SBATCH --time=8:00:00
 #SBATCH --partition=DGX
 #SBATCH --exclusive
 #SBATCH --output=KAN-%j.out
@@ -15,11 +15,11 @@ conda activate NLP
 
 torchrun --nproc_per_node=8 --nnodes=1 \
                     train.py --architecture='KAN' --learning_rate=1e-3 --min_lr=6e-5 \
-                    --weight_decay=.0 --wandb_run_name='KAN-GPT2' \
-                    --n_layer=2 --n_embd=360 \
+                    --weight_decay=.0 --dropout=.0 --wandb_run_name='KAN-GPT2' \
+                    --n_layer=8 --n_embd=372 \
                     --k=3 --grid=3 \
                     --max_iters=12000 --lr_decay_iters=12000 \
-                    --out_dir='out_kan' \
-                    --attn='KAN_Attn'
+                    --out_dir='out_attn_kan' \
+                    --attn='KAN_Attn'   
 
 date

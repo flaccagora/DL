@@ -37,7 +37,7 @@ class CausalSelfAttention(nn.Module):
         if config.architecture == 'KAN' and config.attn == 'KAN_Attn':
             self.c_attn = KAN(width=[config.n_embd, 3 * config.n_embd],grid=config.grid,k=config.k)
             self.c_proj = KAN(width=[config.n_embd, config.n_embd],grid=config.grid,k=config.k)
-        elif config.attn == 'MLP_Attn':
+        elif config.attn == 'Linear_Attn':
             self.c_attn = nn.Linear(config.n_embd, 3 * config.n_embd, bias=config.bias)
             self.c_proj = nn.Linear(config.n_embd, config.n_embd, bias=config.bias)
         else:
@@ -124,6 +124,8 @@ class GPTConfig:
     bias: bool = True # True: bias in Linears and LayerNorms, like GPT-2. False: a bit better and faster
     grid: int = 3
     k: int = 3
+    architecture: str = 'KAN'
+    attn: str = 'KAN_Attn'
 
 class GPT(nn.Module):
 
