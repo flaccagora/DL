@@ -87,9 +87,9 @@ class MLP(nn.Module):
 
     def __init__(self, config):
         super().__init__()
-        self.c_fc    = KAN(width=[config.n_embd, config.n_embd * 4],grid=config.grid,k=config.k)
+        self.c_fc    = KAN(width=[config.n_embd, config.n_embd * config.mult],grid=config.grid,k=config.k)
         self.gelu    = nn.GELU()
-        self.c_proj  = KAN(width=[4*config.n_embd, config.n_embd],grid=config.grid,k=config.k)
+        self.c_proj  = KAN(width=[config.mult*config.n_embd, config.n_embd],grid=config.grid,k=config.k)
         self.dropout = nn.Dropout(config.dropout)
 
     def forward(self, x):
@@ -126,6 +126,7 @@ class GPTConfig:
     k: int = 3
     architecture: str = 'KAN'
     attn: str = 'Linear_Attn'
+    mult: int = 4
 
 class GPT(nn.Module):
 
