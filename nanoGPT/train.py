@@ -161,7 +161,7 @@ model_args = dict(n_layer=n_layer, n_head=n_head, n_embd=n_embd, block_size=bloc
 
 if architecture == 'KAN': 
     model_args = dict(n_layer=n_layer, n_head=n_head, n_embd=n_embd, block_size=block_size,
-                  bias=bias, vocab_size=None, dropout=dropout, grid=grid, k=k) # start with model_args from command line
+                  bias=bias, vocab_size=None, dropout=dropout, grid=grid, k=k, architecture=architecture, attn = attn, mult = mult) # start with model_args from command line
 
 if init_from == 'scratch':
     # init a new model from scratch
