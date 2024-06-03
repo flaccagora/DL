@@ -167,8 +167,8 @@ class KANLayer(nn.Module):
         '''
         
 
-        B, C, T = x.shape
-        x = x.view(-1, T)
+        # B, C, T = x.shape
+        # x = x.view(-1, T)
         batch = x.shape[0]
         print(x.shape)
 

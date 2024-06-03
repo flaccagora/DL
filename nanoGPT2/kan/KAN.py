@@ -297,6 +297,7 @@ class KAN(nn.Module):
         torch.Size([100, 3])
         '''
         B, C, T = x.shape
+        x = x.view(-1, T)
 
         self.acts = []  # shape ([batch, n0], [batch, n1], ..., [batch, n_L])
         self.spline_preacts = []
