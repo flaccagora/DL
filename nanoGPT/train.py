@@ -30,6 +30,7 @@ from torch.distributed import init_process_group, destroy_process_group
 from model import GPTConfig, GPT
 from model_kan import GPT as KAN_GPT
 from model_kan import GPTConfig as KAN_GPTConfig
+from model_kan_nogelu import GPT as KAN_GPT_nogelu
 
 # -----------------------------------------------------------------------------
 # default config values designed to train a gpt2 (124M) on OpenWebText
@@ -80,6 +81,7 @@ k = 3
 grid = 3
 mult = 4
 attn = 'Linear_Attn'
+gelu = False
 # -----------------------------------------------------------------------------
 config_keys = [k for k,v in globals().items() if not k.startswith('_') and isinstance(v, (int, float, bool, str))]
 exec(open('configurator.py').read()) # overrides from command line or config file
@@ -89,6 +91,11 @@ if architecture == 'KAN':
     GPT = KAN_GPT
     GPTConfig = KAN_GPTConfig
     print("Using KAN architecture\n")
+    
+    if gelu == True:
+        GPT = KAN_GPT_nogelu
+        print("Using KAN architecture with GELU\n")
+
 # -----------------------------------------------------------------------------
 # various inits, derived attributes, I/O setup
 ddp = int(os.environ.get('RANK', -1)) != -1 # is this a ddp run?
