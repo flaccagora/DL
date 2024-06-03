@@ -81,7 +81,7 @@ k = 3
 grid = 3
 mult = 4
 attn = 'Linear_Attn'
-gelu = False
+gelu = True
 # -----------------------------------------------------------------------------
 config_keys = [k for k,v in globals().items() if not k.startswith('_') and isinstance(v, (int, float, bool, str))]
 exec(open('configurator.py').read()) # overrides from command line or config file
@@ -92,7 +92,7 @@ if architecture == 'KAN':
     GPTConfig = KAN_GPTConfig
     print("Using KAN architecture\n")
     
-    if gelu == True:
+    if gelu == False:
         GPT = KAN_GPT_nogelu
         print("Using KAN architecture with GELU\n")
 
