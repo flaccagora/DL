@@ -296,6 +296,7 @@ class KAN(nn.Module):
         >>> model(x).shape
         torch.Size([100, 3])
         '''
+        B, C, T = x.shape
 
         self.acts = []  # shape ([batch, n0], [batch, n1], ..., [batch, n_L])
         self.spline_preacts = []
@@ -331,7 +332,9 @@ class KAN(nn.Module):
             self.spline_postsplines.append(postspline.detach())
 
             #x = x + self.biases[l].weight
-            
+            U = x.shape[1]
+            x = x.view(B,C,U)
+                       
             self.acts.append(x)
 
         return x
