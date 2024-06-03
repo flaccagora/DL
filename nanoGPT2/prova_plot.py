@@ -48,7 +48,7 @@ for k,v in list(state_dict.items()):
 #model.load_state_dict(state_dict)
 
 
-
+print(checkpoint['config'])
 
 
 rename_map = {
