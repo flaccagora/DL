@@ -78,7 +78,7 @@ class KAN(nn.Module):
     '''
 
     def __init__(self, width=None, grid=3, k=3, noise_scale=0.1, noise_scale_base=0.1, base_fun=torch.nn.SiLU(), symbolic_enabled=False, bias_trainable=False, grid_eps=1.0, grid_range=[-1, 1], sp_trainable=True, sb_trainable=True,
-                 device='cpu', seed=0):
+                 device='cuda', seed=0):
         '''
         initalize a KAN model
         
